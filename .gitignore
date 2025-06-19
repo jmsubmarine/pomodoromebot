@@ -1,0 +1,9 @@
+.env
+*.swp
+*~
+.DS_Store
+bin/
+*.exe
+*.out
+go.sum
+
