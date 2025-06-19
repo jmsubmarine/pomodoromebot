@@ -34,28 +34,28 @@ func HandleUpdate(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 func handleCommand(bot *tgbotapi.BotAPI, chatID int64, command string) {
 	switch command {
 	case "start":
-		send(bot, chatID, `Привет! Я помогу тебе сосредоточиться 🍅
+		send(bot, chatID, `Hi! I'm here to help you focus 🍅
 
-Напиши /runpomodoro, чтобы запустить серию таймеров по технике Помидоро. После каждого 25-минутного раунда будет 5 минут перерыва.
+Send /runpomodoro to start a series of Pomodoro timers. After each 25-minute work round, you'll get a 5-minute break.
 
-Если тебе нужна помощь — напиши /help.`)
+If you need help, type /help.`)
 
 	case "help":
-		send(bot, chatID, `Что я умею:
+		send(bot, chatID, `What I can do:
 
-/runpomodoro — начать серию таймеров  
-/stop — остановить текущую сессию  
-/status — узнать статус текущей сессии  
-/music — получить музыку для фона`)
+/runpomodoro — start a Pomodoro timer session  
+/stop — stop the current session  
+/status — check the status of the current session  
+/music — get background music suggestions`)
 
 	case "runpomodoro":
 		if session, ok := Store.Get(chatID); ok && session.Timer != nil {
-			send(bot, chatID, "У тебя уже идёт сессия. Напиши /stop, если хочешь начать заново.")
+			send(bot, chatID, "You already have an active session. Send /stop if you want to start over.")
 			return
 		}
 
 		Store.Set(chatID, &PomodoroSession{AwaitingInput: true})
-		send(bot, chatID, "Сколько раундов ты хочешь сделать? Введи число от 1 до 10:")
+		send(bot, chatID, "How many rounds would you like to do? Enter a number from 1 to 10:")
 
 	case "stop":
 		stopSession(bot, chatID)
@@ -65,14 +65,14 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, command string) {
 
 	case "music":
 		sendHTML(bot, chatID,
-			`Вот список рекомендаций с музыкой для фона:
+			`Here’s a list of background music recommendations:
 
 <a href="https://youtu.be/t3LCXpKI9K0?si=27yfd61dEv82lgVj">Redwood Resonance</a>  
 <a href="https://youtu.be/wIBnaNuhuCQ?si=dTYX0vD-3ZLqUi7e">ASMR New York Library</a>  
 <a href="https://youtu.be/ecechHEtkYU?si=uzsf6K7IV7WKvtVl">quiet mornings, slowly waking up to the smell of fresh coffee</a>  
 <a href="https://youtu.be/tFAjJsqdO_A?si=cpy3BS__3J9-6Fjz">Harry Potter Chill Music ~ Hogwarts Library</a>`)
 	default:
-		send(bot, chatID, "Неизвестная команда.")
+		send(bot, chatID, "Unknown command.")
 	}
 }
 
@@ -84,7 +84,7 @@ func handleUserInput(bot *tgbotapi.BotAPI, chatID int64, text string) {
 
 	n, err := strconv.Atoi(text)
 	if err != nil || n < MinRounds || n > MaxRounds {
-		send(bot, chatID, fmt.Sprintf("Пожалуйста, введи число от %d до %d.", MinRounds, MaxRounds))
+		send(bot, chatID, fmt.Sprintf("Please enter a number between %d and %d.", MinRounds, MaxRounds))
 		return
 	}
 
@@ -94,7 +94,7 @@ func handleUserInput(bot *tgbotapi.BotAPI, chatID int64, text string) {
 	session.Phase = PhaseWork
 	session.StartTime = time.Now()
 
-	Store.Set(chatID, session) // Обновляем сессию после изменения
+	Store.Set(chatID, session)
 
 	startWorkRound(bot, chatID)
 }
@@ -108,14 +108,14 @@ func startWorkRound(bot *tgbotapi.BotAPI, chatID int64) {
 	session.Phase = PhaseWork
 	session.StartTime = time.Now()
 
-	send(bot, chatID, fmt.Sprintf("Раунд %d: начинаем работу на 25 минут!", session.CurrentRound))
+	send(bot, chatID, fmt.Sprintf("Round %d: time to focus for 25 minutes!", session.CurrentRound))
 
 	session.Timer = time.AfterFunc(DefaultWork, func() {
-		send(bot, chatID, "⏰ Время перерыва! 5 минут отдыха.")
+		send(bot, chatID, "⏰ Break time! Take 5 minutes to rest.")
 		startBreak(bot, chatID)
 	})
 
-	Store.Set(chatID, session) // Обновляем сессию после изменения
+	Store.Set(chatID, session)
 }
 
 func startBreak(bot *tgbotapi.BotAPI, chatID int64) {
@@ -131,22 +131,22 @@ func startBreak(bot *tgbotapi.BotAPI, chatID int64) {
 		session.CurrentRound++
 
 		if session.CurrentRound > session.TotalRounds {
-			send(bot, chatID, "🎉 Все раунды завершены! Отличная работа!")
+			send(bot, chatID, "🎉 All rounds are complete! Great job!")
 			Store.Delete(chatID)
 			return
 		}
 
-		send(bot, chatID, fmt.Sprintf("🔔 Перерыв окончен. Начинаем раунд %d!", session.CurrentRound))
+		send(bot, chatID, fmt.Sprintf("🔔 Break is over. Starting round %d!", session.CurrentRound))
 		startWorkRound(bot, chatID)
 	})
 
-	Store.Set(chatID, session) // Обновляем сессию после изменения
+	Store.Set(chatID, session)
 }
 
 func handleStatus(bot *tgbotapi.BotAPI, chatID int64) {
 	session, ok := Store.Get(chatID)
 	if !ok {
-		send(bot, chatID, "Нет активной сессии.")
+		send(bot, chatID, "No active session.")
 		return
 	}
 
@@ -157,7 +157,7 @@ func handleStatus(bot *tgbotapi.BotAPI, chatID int64) {
 	case PhaseBreak:
 		duration = DefaultBreak
 	default:
-		send(bot, chatID, "Неизвестная фаза.")
+		send(bot, chatID, "Unknown phase.")
 		return
 	}
 
@@ -167,7 +167,7 @@ func handleStatus(bot *tgbotapi.BotAPI, chatID int64) {
 	}
 
 	msg := fmt.Sprintf(
-		"📊 Раунд %d из %d\nФаза: %s\nОставшееся время: %v",
+		"📊 Round %d of %d\nPhase: %s\nTime remaining: %v",
 		session.CurrentRound, session.TotalRounds, session.Phase, remaining.Round(time.Second),
 	)
 	send(bot, chatID, msg)
@@ -176,7 +176,7 @@ func handleStatus(bot *tgbotapi.BotAPI, chatID int64) {
 func stopSession(bot *tgbotapi.BotAPI, chatID int64) {
 	session, ok := Store.Get(chatID)
 	if !ok {
-		send(bot, chatID, "Нет активной сессии.")
+		send(bot, chatID, "No active session.")
 		return
 	}
 
@@ -184,13 +184,13 @@ func stopSession(bot *tgbotapi.BotAPI, chatID int64) {
 		session.Timer.Stop()
 	}
 	Store.Delete(chatID)
-	send(bot, chatID, "⏹ Сессия остановлена.")
+	send(bot, chatID, "⏹ Session stopped.")
 }
 
 func send(bot *tgbotapi.BotAPI, chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
 	if _, err := bot.Send(msg); err != nil {
-		log.Printf("ошибка отправки: %v", err)
+		log.Printf("send error: %v", err)
 	}
 }
 
@@ -198,6 +198,6 @@ func sendHTML(bot *tgbotapi.BotAPI, chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = "HTML"
 	if _, err := bot.Send(msg); err != nil {
-		log.Printf("ошибка отправки (HTML): %v", err)
+		log.Printf("send error (HTML): %v", err)
 	}
 }
