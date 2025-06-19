@@ -31,12 +31,13 @@ Helps you manage your time and tasks effectively right inside the messenger.
    ```bash
    git clone https://github.com/jmsubmarine/pomodoromebot.git
    cd pomodoromebot
-
+   ```
 2. Set up environment variable with your Telegram bot token
-
-export BOT_TOKEN="your-telegram-bot-token"
-
+    ```bash
+    export BOT_TOKEN="your-telegram-bot-token"
+    ```
 3. Build and run the bot
-
-go build -o pomodoromebot
-./pomodoromebot
+    ```bash
+    go build -o pomodoromebot
+    ./pomodoromebot
+    ```
